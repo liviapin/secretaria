@@ -1,0 +1,13 @@
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    ports:
+      - "1433:1433"
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=SuaSenhaSuperSegura123!
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+    restart: always
+volumes:
+  sqlserver_data:
