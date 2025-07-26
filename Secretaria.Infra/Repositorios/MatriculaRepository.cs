@@ -14,18 +14,21 @@ namespace Secretaria.Infra.Repositories
             _context = context;
         }
 
-        public async Task<Matricula> MatrificarAsync(Matricula matricula)
+        public async Task<Matricula> MatricularAsync(Matricula matricula)
         {
             _context.Matriculas.Add(matricula);
             await _context.SaveChangesAsync();
             return matricula;
         }
 
-        public async Task<IEnumerable<Aluno>> ObterAlunosPorTurmaAsync(int turmaId)
+        public async Task<IEnumerable<Aluno>> ObterAlunosPorTurmaAsync(int turmaId, int pageNumber, int pageSize)
         {
             return await _context.Matriculas
                 .Include(m => m.Aluno)
                 .Where(m => m.TurmaId == turmaId)
+                .OrderBy(m => m.Aluno.Nome)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
                 .Select(m => m.Aluno)
                 .ToListAsync();
         }
@@ -34,6 +37,8 @@ namespace Secretaria.Infra.Repositories
         {
             return await _context.Matriculas
                 .Where(m => m.TurmaId == turmaId)
+                .Select(m => m.AlunoId)
+                .Distinct()
                 .CountAsync();
         }
 

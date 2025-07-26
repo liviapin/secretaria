@@ -59,7 +59,7 @@ public class TurmaService : ITurmaService
 
         foreach (var turma in turmas.OrderBy(t => t.Nome))
         {
-            var alunos = await _matriculaRepository.ObterAlunosPorTurmaAsync(turma.Id);
+            var alunos = await _matriculaRepository.ObterAlunosPorTurmaAsync(turma.Id, pageNumber, pageSize);
             turmaResponses.Add(new TurmaResponse
             {
                 Id = turma.Id,
@@ -82,14 +82,14 @@ public class TurmaService : ITurmaService
         if (turma == null)
             return null;
 
-        var alunos = await _matriculaRepository.ObterAlunosPorTurmaAsync(turma.Id);
+        var alunos = await _matriculaRepository.ContarAlunosPorTurmaAsync(turma.Id);
 
         return new TurmaResponse
         {
             Id = turma.Id,
             Nome = turma.Nome,
             Descricao = turma.Descricao,
-            NumeroAlunos = alunos.Count()
+            NumeroAlunos = alunos
         };
     }
 

@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Secretaria.Aplicacao.Interfaces;
 using Secretaria.DataTransfer;
 using Secretaria.DataTransfer.Request;
@@ -7,6 +8,7 @@ using Secretaria.DataTransfer.Response;
 namespace Secretaria.Api.Controllers
 {
     [ApiController]
+    //[Authorize(Roles = "Admin")]
     [Route("api/[controller]")]
     public class AlunosController : ControllerBase
     {

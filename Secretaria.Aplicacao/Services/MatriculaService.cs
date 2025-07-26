@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Secretaria.Aplicacao.Interfaces;
+using Secretaria.DataTransfer;
 using Secretaria.DataTransfer.Request;
 using Secretaria.DataTransfer.Response;
 using Secretaria.Dominio.Interfaces;
@@ -27,24 +28,25 @@ namespace Secretaria.Aplicacao.Services
             _context = context;
         }
 
-        public async Task<MatriculaResponse> MatrificarAsync(MatriculaRequest matriculaRequest)
+        public async Task<MatriculaResponse> MatricularAsync(MatriculaRequest matriculaRequest)
         {
-            var existingMatricula = await _matriculaRepository.ObterMatriculaAsync(matriculaRequest.AlunoId, matriculaRequest.TurmaId);
-            if (existingMatricula != null)
-            {
+            if (!matriculaRequest.AlunoId.HasValue || !matriculaRequest.TurmaId.HasValue)
+                throw new ArgumentException("AlunoId e TurmaId são obrigatórios.");
+
+            var alunoId = matriculaRequest.AlunoId.Value;
+            var turmaId = matriculaRequest.TurmaId.Value;
+
+            if (await _matriculaRepository.ObterMatriculaAsync(alunoId, turmaId) != null)
                 throw new InvalidOperationException("Este aluno já está matriculado nesta turma.");
-            }
 
-            var aluno = await _alunoRepository.ObterPorIdAsync(matriculaRequest.AlunoId);
-            if (aluno == null)
-                throw new ArgumentException("Aluno não encontrado");
+            var aluno = await _alunoRepository.ObterPorIdAsync(alunoId)
+                ?? throw new ArgumentException("Aluno não encontrado");
 
-            var turma = await _turmaRepository.ObterPorIdAsync(matriculaRequest.TurmaId);
-            if (turma == null)
-                throw new ArgumentException("Turma não encontrada");
+            var turma = await _turmaRepository.ObterPorIdAsync(turmaId)
+                ?? throw new ArgumentException("Turma não encontrada");
 
-            var matricula = new Matricula(matriculaRequest.AlunoId, matriculaRequest.TurmaId);
-            matricula = await _matriculaRepository.MatrificarAsync(matricula);
+            var matricula = new Matricula(alunoId, turmaId);
+            matricula = await _matriculaRepository.MatricularAsync(matricula);
 
             return new MatriculaResponse
             {
@@ -54,17 +56,28 @@ namespace Secretaria.Aplicacao.Services
             };
         }
 
-        public async Task<IEnumerable<AlunoResponse>> ObterAlunosPorTurmaAsync(int turmaId)
+
+        public async Task<PagedResponse<AlunoResponse>> ObterAlunosPorTurmaAsync(int turmaId, int pageNumber, int pageSize)
         {
-            var alunos = await _matriculaRepository.ObterAlunosPorTurmaAsync(turmaId);
-            return alunos.Select(a => new AlunoResponse
+            var alunos = await _matriculaRepository.ObterAlunosPorTurmaAsync(turmaId, pageNumber, pageSize);
+
+            var totalAlunos = await _matriculaRepository.ContarAlunosPorTurmaAsync(turmaId);
+
+            var alunosResponse = alunos
+                .Select(a => new AlunoResponse
+                {
+                    Id = a.Id,
+                    Nome = a.Nome,
+                    DataNascimento = a.DataNascimento,
+                    CPF = a.CPF,
+                    Email = a.Email
+                }).ToList();
+
+            return new PagedResponse<AlunoResponse>
             {
-                Id = a.Id,
-                Nome = a.Nome,
-                DataNascimento = a.DataNascimento,
-                CPF = a.CPF,
-                Email = a.Email
-            });
+                Items = alunosResponse,
+                TotalCount = totalAlunos
+            };
         }
 
         public async Task<int> ContarAlunosPorTurmaAsync(int turmaId)

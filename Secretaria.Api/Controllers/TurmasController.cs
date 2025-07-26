@@ -6,6 +6,7 @@ using Secretaria.DataTransfer.Request;
 namespace Secretaria.Api.Controllers
 {
     [ApiController]
+    //[Authorize(Roles = "Admin")]
     [Route("api/[controller]")]
     public class TurmasController : ControllerBase
     {
@@ -34,18 +35,19 @@ namespace Secretaria.Api.Controllers
 
 
         [HttpPost]
-        public async Task<ActionResult<TurmaResponse>> Criar([FromBody] CreateTurmaRequest turmaRequest)
+        public async Task<IActionResult> CriarTurma([FromBody] CreateTurmaRequest request)
         {
-            try
-            {
-                var turmaCriada = await _turmaService.CriarTurmaAsync(turmaRequest);
-                return CreatedAtAction(nameof(ObterPorId), new { id = turmaCriada.Id }, turmaCriada);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Erro interno: {ex.Message}");
-            }
+            var result = await _turmaService.CriarTurmaAsync(request);
+            return Ok(result);
         }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Atualizar(int id, [FromBody] UpdateTurmaRequest request)
+        {
+            var result = await _turmaService.AtualizarTurmaAsync(id, request);
+            return Ok(result);
+        }
+
 
         [HttpGet("{id}")]
         public async Task<ActionResult<TurmaResponse>> ObterPorId(int id)
@@ -58,21 +60,6 @@ namespace Secretaria.Api.Controllers
                     return NotFound();
 
                 return Ok(turma);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Erro interno: {ex.Message}");
-            }
-        }
-
-
-        [HttpPut("{id}")]
-        public async Task<ActionResult<TurmaResponse>> Atualizar(int id, [FromBody] UpdateTurmaRequest turmaRequest)
-        {
-            try
-            {
-                var turmaAtualizada = await _turmaService.AtualizarTurmaAsync(id, turmaRequest);
-                return Ok(turmaAtualizada);
             }
             catch (Exception ex)
             {

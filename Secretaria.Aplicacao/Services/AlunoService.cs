@@ -27,13 +27,14 @@ namespace Secretaria.Aplicacao.Services
             var cpf = req.CPF?.Trim();
             var email = req.Email?.Trim();
             var senha = req.Senha;
+            var dataNascimento = req.DataNascimento.Value;
 
-            ValidarDadosAluno(nome, cpf, email);
+            ValidarDadosAluno(nome, cpf, email, dataNascimento);
             await ValidarDuplicidadeAsync(cpf, email);
             ValidarSenha(senha);
 
             var hashedPwd = BCrypt.Net.BCrypt.HashPassword(senha);
-            var aluno = new Aluno(nome, req.DataNascimento, cpf, email, hashedPwd);
+            var aluno = new Aluno(nome, dataNascimento, cpf, email, hashedPwd);
 
             try
             {
@@ -57,8 +58,9 @@ namespace Secretaria.Aplicacao.Services
             var nome = alunoRequest.Nome?.Trim();
             var cpf = alunoRequest.CPF?.Trim();
             var email = alunoRequest.Email?.Trim();
+            var dataNascimento = alunoRequest.DataNascimento;
 
-            ValidarDadosAluno(nome, cpf, email);
+            ValidarDadosAluno(nome, cpf, email, dataNascimento);
             await ValidarDuplicidadeAsync(cpf, email, id);
 
             aluno.Atualizar(nome, alunoRequest.DataNascimento, cpf, email);
@@ -71,7 +73,7 @@ namespace Secretaria.Aplicacao.Services
         }
 
 
-        private void ValidarDadosAluno(string nome, string cpf, string email)
+        private void ValidarDadosAluno(string nome, string cpf, string email, DateTime? dataNascimento = null)
         {
             if (string.IsNullOrWhiteSpace(nome) || nome.Length < 3)
                 throw new ArgumentException("O nome do aluno deve ter no mínimo 3 caracteres.");
@@ -82,6 +84,13 @@ namespace Secretaria.Aplicacao.Services
             if (string.IsNullOrWhiteSpace(email) ||
                 !Regex.IsMatch(email, @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
                 throw new ArgumentException("Formato de e-mail inválido.");
+
+            if (!dataNascimento.HasValue)
+                throw new ArgumentException("A data de nascimento é obrigatória.");
+
+            if (dataNascimento.Value.Date >= DateTime.Today)
+                throw new ArgumentException("A data de nascimento deve ser uma data passada.");
+
         }
 
         private void ValidarSenha(string senha)
