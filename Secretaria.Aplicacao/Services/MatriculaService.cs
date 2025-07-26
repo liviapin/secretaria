@@ -30,13 +30,10 @@ namespace Secretaria.Aplicacao.Services
 
         public async Task<MatriculaResponse> MatricularAsync(MatriculaRequest matriculaRequest)
         {
-            if (!matriculaRequest.AlunoId.HasValue || !matriculaRequest.TurmaId.HasValue)
-                throw new ArgumentException("AlunoId e TurmaId são obrigatórios.");
+            var alunoId = matriculaRequest.AlunoId ?? throw new ArgumentException("AlunoId é obrigatório.");
+            var turmaId = matriculaRequest.TurmaId ?? throw new ArgumentException("TurmaId é obrigatório.");
 
-            var alunoId = matriculaRequest.AlunoId.Value;
-            var turmaId = matriculaRequest.TurmaId.Value;
-
-            if (await _matriculaRepository.ObterMatriculaAsync(alunoId, turmaId) != null)
+            if (await _matriculaRepository.ObterMatriculaAsync(alunoId, turmaId) is not null)
                 throw new InvalidOperationException("Este aluno já está matriculado nesta turma.");
 
             var aluno = await _alunoRepository.ObterPorIdAsync(alunoId)
@@ -46,6 +43,7 @@ namespace Secretaria.Aplicacao.Services
                 ?? throw new ArgumentException("Turma não encontrada");
 
             var matricula = new Matricula(alunoId, turmaId);
+
             matricula = await _matriculaRepository.MatricularAsync(matricula);
 
             return new MatriculaResponse
@@ -55,8 +53,6 @@ namespace Secretaria.Aplicacao.Services
                 TurmaId = matricula.TurmaId
             };
         }
-
-
         public async Task<PagedResponse<AlunoResponse>> ObterAlunosPorTurmaAsync(int turmaId, int pageNumber, int pageSize)
         {
             var alunos = await _matriculaRepository.ObterAlunosPorTurmaAsync(turmaId, pageNumber, pageSize);
@@ -69,7 +65,7 @@ namespace Secretaria.Aplicacao.Services
                     Id = a.Id,
                     Nome = a.Nome,
                     DataNascimento = a.DataNascimento,
-                    CPF = a.CPF,
+                    CPF = a.Cpf,
                     Email = a.Email
                 }).ToList();
 

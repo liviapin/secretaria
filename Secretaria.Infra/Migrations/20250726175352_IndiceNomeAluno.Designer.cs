@@ -12,8 +12,8 @@ using Secretaria.Infra.Context;
 namespace Secretaria.Infra.Migrations
 {
     [DbContext(typeof(SecretariaDbContext))]
-    [Migration("20250725024038_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20250726175352_IndiceNomeAluno")]
+    partial class IndiceNomeAluno
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -131,7 +131,7 @@ namespace Secretaria.Infra.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("Secretaria.Dominio.Entidades.Aluno", b =>
+            modelBuilder.Entity("Secretaria.Dominio.Models.Aluno", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -152,7 +152,7 @@ namespace Secretaria.Infra.Migrations
 
                     b.Property<string>("Nome")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("Senha")
                         .IsRequired()
@@ -160,10 +160,12 @@ namespace Secretaria.Infra.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Nome");
+
                     b.ToTable("Alunos");
                 });
 
-            modelBuilder.Entity("Secretaria.Dominio.Entidades.ApplicationRole", b =>
+            modelBuilder.Entity("Secretaria.Dominio.Models.ApplicationRole", b =>
                 {
                     b.Property<string>("Id")
                         .HasColumnType("nvarchar(450)");
@@ -190,7 +192,7 @@ namespace Secretaria.Infra.Migrations
                     b.ToTable("AspNetRoles", (string)null);
                 });
 
-            modelBuilder.Entity("Secretaria.Dominio.Entidades.ApplicationUser", b =>
+            modelBuilder.Entity("Secretaria.Dominio.Models.ApplicationUser", b =>
                 {
                     b.Property<string>("Id")
                         .HasColumnType("nvarchar(450)");
@@ -255,7 +257,7 @@ namespace Secretaria.Infra.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
-            modelBuilder.Entity("Secretaria.Dominio.Entidades.Matricula", b =>
+            modelBuilder.Entity("Secretaria.Dominio.Models.Matricula", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -278,7 +280,7 @@ namespace Secretaria.Infra.Migrations
                     b.ToTable("Matriculas");
                 });
 
-            modelBuilder.Entity("Secretaria.Dominio.Entidades.Turma", b =>
+            modelBuilder.Entity("Secretaria.Dominio.Models.Turma", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -301,7 +303,7 @@ namespace Secretaria.Infra.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
-                    b.HasOne("Secretaria.Dominio.Entidades.ApplicationRole", null)
+                    b.HasOne("Secretaria.Dominio.Models.ApplicationRole", null)
                         .WithMany()
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -310,7 +312,7 @@ namespace Secretaria.Infra.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
                 {
-                    b.HasOne("Secretaria.Dominio.Entidades.ApplicationUser", null)
+                    b.HasOne("Secretaria.Dominio.Models.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -319,7 +321,7 @@ namespace Secretaria.Infra.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
                 {
-                    b.HasOne("Secretaria.Dominio.Entidades.ApplicationUser", null)
+                    b.HasOne("Secretaria.Dominio.Models.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -328,13 +330,13 @@ namespace Secretaria.Infra.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
                 {
-                    b.HasOne("Secretaria.Dominio.Entidades.ApplicationRole", null)
+                    b.HasOne("Secretaria.Dominio.Models.ApplicationRole", null)
                         .WithMany()
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Secretaria.Dominio.Entidades.ApplicationUser", null)
+                    b.HasOne("Secretaria.Dominio.Models.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -343,22 +345,22 @@ namespace Secretaria.Infra.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
                 {
-                    b.HasOne("Secretaria.Dominio.Entidades.ApplicationUser", null)
+                    b.HasOne("Secretaria.Dominio.Models.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Secretaria.Dominio.Entidades.Matricula", b =>
+            modelBuilder.Entity("Secretaria.Dominio.Models.Matricula", b =>
                 {
-                    b.HasOne("Secretaria.Dominio.Entidades.Aluno", "Aluno")
+                    b.HasOne("Secretaria.Dominio.Models.Aluno", "Aluno")
                         .WithMany()
                         .HasForeignKey("AlunoId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Secretaria.Dominio.Entidades.Turma", "Turma")
+                    b.HasOne("Secretaria.Dominio.Models.Turma", "Turma")
                         .WithMany()
                         .HasForeignKey("TurmaId")
                         .OnDelete(DeleteBehavior.Cascade)

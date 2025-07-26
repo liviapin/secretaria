@@ -89,7 +89,7 @@ namespace Secretaria.Infra.Repositories
         public async Task<Aluno?> ObterPorCpfAsync(string cpf)
         {
             return await _context.Alunos
-                .FirstOrDefaultAsync(a => a.CPF == cpf);
+                .FirstOrDefaultAsync(a => a.Cpf == cpf);
         }
     }
 }

@@ -20,7 +20,6 @@ public class TurmaService : ITurmaService
         var nome = turmaRequest.Nome?.Trim();
         var descricao = turmaRequest.Descricao?.Trim();
 
-        ValidarNome(nome);
         await ValidarNomeDuplicadoAsync(nome);
 
         var turma = new Turma(nome, descricao);
@@ -38,7 +37,6 @@ public class TurmaService : ITurmaService
         var nome = turmaRequest.Nome?.Trim();
         var descricao = turmaRequest.Descricao?.Trim();
 
-        ValidarNome(nome);
         await ValidarNomeDuplicadoAsync(nome, id);
 
         turma.Atualizar(nome, descricao);
@@ -96,13 +94,6 @@ public class TurmaService : ITurmaService
     public async Task<bool> RemoverTurmaAsync(int id)
     {
         return await _turmaRepository.RemoverAsync(id);
-    }
-
-
-    private void ValidarNome(string nome)
-    {
-        if (string.IsNullOrWhiteSpace(nome) || nome.Length < 3)
-            throw new ArgumentException("O nome da turma deve ter no mínimo 3 caracteres.");
     }
 
     private async Task ValidarNomeDuplicadoAsync(string nome, int? idAtual = null)
