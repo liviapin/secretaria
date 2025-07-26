@@ -19,10 +19,10 @@ public class AlunoService : IAlunoService
         if (req is null)
             throw new ArgumentNullException(nameof(req));
 
+
         await ValidarDuplicidadeAsync(req.CPF, req.Email);
 
-        var hashedPwd = BCrypt.Net.BCrypt.HashPassword(req.Senha);
-        var aluno = new Aluno(req.Nome, req.DataNascimento, req.CPF, req.Email, hashedPwd);
+        var aluno = new Aluno(req.Nome, req.DataNascimento, req.CPF, req.Email, req.Senha);
 
         var alunoCriado = await _alunoRepository.AdicionarAsync(aluno);
         return MapearAlunoResponse(alunoCriado);

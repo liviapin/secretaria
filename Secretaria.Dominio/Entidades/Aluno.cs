@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using BCrypt.Net;
+using Microsoft.EntityFrameworkCore;
 using System.Text.RegularExpressions;
 
 namespace Secretaria.Dominio.Models
@@ -13,6 +14,7 @@ namespace Secretaria.Dominio.Models
         public string Email { get; private set; }
         public string Senha { get; private set; }
 
+        public Aluno() { }
         public Aluno(string nome, DateTime dataNascimento, string cpf, string email, string senha)
         {
             cpf = RemoverFormatacaoCPF(cpf);
@@ -22,7 +24,7 @@ namespace Secretaria.Dominio.Models
             DataNascimento = dataNascimento;
             Cpf = cpf;
             Email = email.Trim();
-            Senha = senha;
+            Senha = BCrypt.Net.BCrypt.HashPassword(senha);
         }
 
         public void Atualizar(string nome, DateTime dataNascimento, string cpf, string email)
@@ -41,8 +43,7 @@ namespace Secretaria.Dominio.Models
             return new string(cpf.Where(char.IsDigit).ToArray());
         }
 
-
-        private void Validar(string nome, DateTime dataNascimento, string cpf, string email, string senha = null)
+        public void Validar(string nome, DateTime dataNascimento, string cpf, string email, string senha = null)
         {
             if (string.IsNullOrWhiteSpace(nome) || nome.Trim().Length < 3)
                 throw new ArgumentException("O nome do aluno deve ter no mínimo 3 caracteres.");
@@ -56,9 +57,25 @@ namespace Secretaria.Dominio.Models
             if (dataNascimento.Date >= DateTime.Today)
                 throw new ArgumentException("A data de nascimento deve ser uma data passada.");
 
-            if (senha != null && senha.Length == 0)
-                throw new ArgumentException("A senha não pode ser vazia.");
+            if (senha != null)
+            {
+                if (senha.Length < 8)
+                    throw new ArgumentException("A senha deve conter no mínimo 8 caracteres.");
+
+                if (!senha.Any(char.IsUpper))
+                    throw new ArgumentException("A senha deve conter ao menos uma letra maiúscula.");
+
+                if (!senha.Any(char.IsLower))
+                    throw new ArgumentException("A senha deve conter ao menos uma letra minúscula.");
+
+                if (!senha.Any(char.IsDigit))
+                    throw new ArgumentException("A senha deve conter ao menos um número.");
+
+                if (!senha.Any(c => !char.IsLetterOrDigit(c)))
+                    throw new ArgumentException("A senha deve conter ao menos um caractere especial.");
+            }
         }
+
 
         private bool ValidarCPF(string cpf)
         {

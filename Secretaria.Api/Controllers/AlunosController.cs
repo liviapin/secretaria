@@ -28,8 +28,15 @@ namespace Secretaria.Api.Controllers
         [HttpGet]
         public async Task<ActionResult<PagedResponse<AlunoResponse>>> ObterTodos(int pageNumber = 1, int pageSize = 10)
         {
-            var alunosPaged = await _alunoService.ObterAlunosAsync(pageNumber, pageSize);
-            return Ok(alunosPaged);
+            try
+            {
+                var alunosPaged = await _alunoService.ObterAlunosAsync(pageNumber, pageSize);
+                return Ok(alunosPaged);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Erro ao obter alunos: {ex.Message}");
+            }
         }
 
         /// <summary>
@@ -41,12 +48,21 @@ namespace Secretaria.Api.Controllers
         public async Task<ActionResult<AlunoResponse>> Criar([FromBody] CreateAlunoRequest alunoRequest)
         {
             if (!ModelState.IsValid)
-            {
                 return BadRequest(ModelState);
-            }
 
-            var alunoCriado = await _alunoService.CriarAlunoAsync(alunoRequest);
-            return CreatedAtAction(nameof(ObterPorId), new { id = alunoCriado.Id }, alunoCriado);
+            try
+            {
+                var alunoCriado = await _alunoService.CriarAlunoAsync(alunoRequest);
+                return CreatedAtAction(nameof(ObterPorId), new { id = alunoCriado.Id }, alunoCriado);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Erro ao criar aluno: {ex.Message}");
+            }
         }
 
         /// <summary>
@@ -57,8 +73,18 @@ namespace Secretaria.Api.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<AlunoResponse>> ObterPorId(int id)
         {
-            var aluno = await _alunoService.ObterAlunoPorIdAsync(id);
-            return Ok(aluno);
+            try
+            {
+                var aluno = await _alunoService.ObterAlunoPorIdAsync(id);
+                if (aluno == null)
+                    return NotFound();
+
+                return Ok(aluno);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Erro ao obter aluno: {ex.Message}");
+            }
         }
 
         /// <summary>
@@ -71,8 +97,15 @@ namespace Secretaria.Api.Controllers
         [HttpGet("buscar")]
         public async Task<ActionResult<PagedResponse<AlunoResponse>>> BuscarPorNome(string nome, int pageNumber = 1, int pageSize = 10)
         {
-            var alunosPaged = await _alunoService.ObterPorNomeAsync(nome, pageNumber, pageSize);
-            return Ok(alunosPaged);
+            try
+            {
+                var alunosPaged = await _alunoService.ObterPorNomeAsync(nome, pageNumber, pageSize);
+                return Ok(alunosPaged);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Erro ao buscar alunos: {ex.Message}");
+            }
         }
 
         /// <summary>
@@ -84,8 +117,23 @@ namespace Secretaria.Api.Controllers
         [HttpPut("{id}")]
         public async Task<ActionResult<AlunoResponse>> Atualizar(int id, [FromBody] UpdateAlunoRequest alunoRequest)
         {
-            var alunoAtualizado = await _alunoService.AtualizarAlunoAsync(id, alunoRequest);
-            return Ok(alunoAtualizado);
+            try
+            {
+                var alunoAtualizado = await _alunoService.AtualizarAlunoAsync(id, alunoRequest);
+                return Ok(alunoAtualizado);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound();
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Erro ao atualizar aluno: {ex.Message}");
+            }
         }
 
         /// <summary>
@@ -96,11 +144,18 @@ namespace Secretaria.Api.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Remover(int id)
         {
-            var sucesso = await _alunoService.RemoverAlunoAsync(id);
-            if (!sucesso)
-                return NotFound();
+            try
+            {
+                var sucesso = await _alunoService.RemoverAlunoAsync(id);
+                if (!sucesso)
+                    return NotFound();
 
-            return NoContent();
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Erro ao remover aluno: {ex.Message}");
+            }
         }
     }
 }

@@ -39,3 +39,7 @@ No campo exibido, informe o token JWT da seguinte forma:
 Bearer SEU_TOKEN_AQUI
 
 Após autorizar, todas as rotas protegidas estarão disponíveis para testes diretamente no Swagger.
+
+Script de Criação do Banco de Dados (dump.sql)
+
+Não foi necessário adicionar manualmente um script de criação do banco de dados, a migration que inicializa o banco está sendo executada na inicialização da aplicação.
