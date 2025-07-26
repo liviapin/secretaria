@@ -2,9 +2,6 @@
 using Secretaria.Dominio.Interfaces;
 using Secretaria.Dominio.Models;
 using Secretaria.Infra.Context;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace Secretaria.Infra.Repositories
 {

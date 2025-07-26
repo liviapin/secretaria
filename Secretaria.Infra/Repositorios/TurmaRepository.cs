@@ -21,14 +21,27 @@ namespace Secretaria.Infra.Repositories
             return turma;
         }
 
-        public async Task<IEnumerable<Turma>> ObterTodosAsync()
+        public async Task<IEnumerable<Turma>> ObterTodosAsync(int pageNumber = 1, int pageSize = 10)
         {
-            return await _context.Turmas.ToListAsync();
+            return await _context.Turmas
+                .OrderBy(t => t.Nome)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
         }
-
         public async Task<Turma> ObterPorIdAsync(int id)
         {
             return await _context.Turmas.FindAsync(id);
+        }
+        public async Task<Turma> ObterPorNomeAsync(string nome)
+        {
+            return await _context.Turmas
+                .FirstOrDefaultAsync(t => t.Nome.ToLower() == nome.ToLower());
+        }
+
+        public async Task<int> ContarTurmasAsync()
+        {
+            return await _context.Turmas.CountAsync();
         }
 
         public async Task<bool> AtualizarAsync(Turma turma)

@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Secretaria.Aplicacao.Interfaces;
+using Secretaria.DataTransfer;
 using Secretaria.DataTransfer.Request;
 using Secretaria.DataTransfer.Response;
 using Secretaria.Dominio.Interfaces;
@@ -27,6 +28,51 @@ namespace Secretaria.Aplicacao.Services
             var email = req.Email?.Trim();
             var senha = req.Senha;
 
+            ValidarDadosAluno(nome, cpf, email);
+            await ValidarDuplicidadeAsync(cpf, email);
+            ValidarSenha(senha);
+
+            var hashedPwd = BCrypt.Net.BCrypt.HashPassword(senha);
+            var aluno = new Aluno(nome, req.DataNascimento, cpf, email, hashedPwd);
+
+            try
+            {
+                aluno = await _alunoRepository.AdicionarAsync(aluno);
+            }
+            catch (DbUpdateException dbEx)
+            {
+                throw new InvalidOperationException(
+                    "Falha ao criar aluno: já existe um registro com este CPF ou e-mail.", dbEx);
+            }
+
+            return MapearAlunoResponse(aluno);
+        }
+
+        public async Task<AlunoResponse> AtualizarAlunoAsync(int id, UpdateAlunoRequest alunoRequest)
+        {
+            var aluno = await _alunoRepository.ObterPorIdAsync(id);
+            if (aluno == null)
+                throw new Exception("Aluno não encontrado");
+
+            var nome = alunoRequest.Nome?.Trim();
+            var cpf = alunoRequest.CPF?.Trim();
+            var email = alunoRequest.Email?.Trim();
+
+            ValidarDadosAluno(nome, cpf, email);
+            await ValidarDuplicidadeAsync(cpf, email, id);
+
+            aluno.Atualizar(nome, alunoRequest.DataNascimento, cpf, email);
+
+            var atualizado = await _alunoRepository.AtualizarAsync(aluno);
+            if (!atualizado)
+                throw new Exception("Erro ao atualizar aluno");
+
+            return MapearAlunoResponse(aluno);
+        }
+
+
+        private void ValidarDadosAluno(string nome, string cpf, string email)
+        {
             if (string.IsNullOrWhiteSpace(nome) || nome.Length < 3)
                 throw new ArgumentException("O nome do aluno deve ter no mínimo 3 caracteres.");
 
@@ -36,7 +82,10 @@ namespace Secretaria.Aplicacao.Services
             if (string.IsNullOrWhiteSpace(email) ||
                 !Regex.IsMatch(email, @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
                 throw new ArgumentException("Formato de e-mail inválido.");
+        }
 
+        private void ValidarSenha(string senha)
+        {
             if (string.IsNullOrWhiteSpace(senha))
                 throw new ArgumentException("A senha não pode ser vazia.");
 
@@ -44,27 +93,21 @@ namespace Secretaria.Aplicacao.Services
             if (!Regex.IsMatch(senha, senhaPattern))
                 throw new ArgumentException(
                     "A senha deve ter no mínimo 8 caracteres, contendo letras maiúsculas, minúsculas, números e símbolos.");
+        }
 
-            if (await _alunoRepository.ObterPorCpfAsync(cpf) != null)
+        private async Task ValidarDuplicidadeAsync(string cpf, string email, int? idAtual = null)
+        {
+            var alunoCpf = await _alunoRepository.ObterPorCpfAsync(cpf);
+            if (alunoCpf != null && alunoCpf.Id != idAtual)
                 throw new InvalidOperationException("Já existe um aluno cadastrado com este CPF.");
-            if (await _alunoRepository.ObterPorEmailAsync(email) != null)
+
+            var alunoEmail = await _alunoRepository.ObterPorEmailAsync(email);
+            if (alunoEmail != null && alunoEmail.Id != idAtual)
                 throw new InvalidOperationException("Já existe um aluno cadastrado com este e-mail.");
+        }
 
-            var hashedPwd = BCrypt.Net.BCrypt.HashPassword(senha);
-
-            var aluno = new Aluno(nome, req.DataNascimento, cpf, email, hashedPwd);
-
-            try
-            {
-                aluno = await _alunoRepository.AdicionarAsync(aluno);
-            }
-            catch (DbUpdateException dbEx)
-            {
-
-                throw new InvalidOperationException(
-                    "Falha ao criar aluno: já existe um registro com este CPF ou e-mail.", dbEx);
-            }
-
+        private AlunoResponse MapearAlunoResponse(Aluno aluno)
+        {
             return new AlunoResponse
             {
                 Id = aluno.Id,
@@ -75,17 +118,28 @@ namespace Secretaria.Aplicacao.Services
             };
         }
 
-        public async Task<IEnumerable<AlunoResponse>> ObterAlunosAsync(int pageNumber, int pageSize)
+        public async Task<PagedResponse<AlunoResponse>> ObterAlunosAsync(int pageNumber, int pageSize)
         {
             var alunos = await _alunoRepository.ObterTodosAsync(pageNumber, pageSize);
-            return alunos.Select(a => new AlunoResponse
+
+            var totalAlunos = await _alunoRepository.ContarAlunosAsync();
+
+            var alunosResponse = alunos
+                .OrderBy(a => a.Nome)
+                .Select(a => new AlunoResponse
+                {
+                    Id = a.Id,
+                    Nome = a.Nome,
+                    DataNascimento = a.DataNascimento,
+                    CPF = a.CPF,
+                    Email = a.Email
+                });
+
+            return new PagedResponse<AlunoResponse>
             {
-                Id = a.Id,
-                Nome = a.Nome,
-                DataNascimento = a.DataNascimento,
-                CPF = a.CPF,
-                Email = a.Email
-            });
+                Items = alunosResponse,
+                TotalCount = totalAlunos
+            };
         }
 
         public async Task<AlunoResponse> ObterAlunoPorIdAsync(int id)
@@ -106,46 +160,30 @@ namespace Secretaria.Aplicacao.Services
             };
         }
 
-        public async Task<IEnumerable<AlunoResponse>> ObterPorNomeAsync(string nome)
+        public async Task<PagedResponse<AlunoResponse>> ObterPorNomeAsync(string nome, int pageNumber, int pageSize)
         {
             if (string.IsNullOrWhiteSpace(nome) || nome.Length < 3)
                 throw new ArgumentException("O termo de busca deve ter ao menos 3 caracteres.");
 
-            var alunos = await _alunoRepository.ObterPorNomeAsync(nome);
-            return alunos.Select(a => new AlunoResponse
+            var alunos = await _alunoRepository.ObterPorNomeAsync(nome, pageNumber, pageSize);
+
+            var totalAlunos = await _alunoRepository.ContarAlunosPorNomeAsync(nome);
+
+            var alunosResponse = alunos
+                .OrderBy(a => a.Nome)
+                .Select(a => new AlunoResponse
+                {
+                    Id = a.Id,
+                    Nome = a.Nome,
+                    DataNascimento = a.DataNascimento,
+                    CPF = a.CPF,
+                    Email = a.Email
+                });
+
+            return new PagedResponse<AlunoResponse>
             {
-                Id = a.Id,
-                Nome = a.Nome,
-                DataNascimento = a.DataNascimento,
-                CPF = a.CPF,
-                Email = a.Email
-            });
-        }
-
-        public async Task<AlunoResponse> AtualizarAlunoAsync(int id, UpdateAlunoRequest alunoRequest)
-        {
-            var aluno = await _alunoRepository.ObterPorIdAsync(id);
-            if (aluno == null)
-                throw new Exception("Aluno não encontrado");
-
-            aluno.Atualizar(
-                alunoRequest.Nome,
-                alunoRequest.DataNascimento,
-                alunoRequest.CPF,
-                alunoRequest.Email
-            );
-
-            var atualizado = await _alunoRepository.AtualizarAsync(aluno);
-            if (!atualizado)
-                throw new Exception("Erro ao atualizar aluno");
-
-            return new AlunoResponse
-            {
-                Id = aluno.Id,
-                Nome = aluno.Nome,
-                DataNascimento = aluno.DataNascimento,
-                CPF = aluno.CPF,
-                Email = aluno.Email
+                Items = alunosResponse,
+                TotalCount = totalAlunos
             };
         }
 

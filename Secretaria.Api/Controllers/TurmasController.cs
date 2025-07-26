@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Secretaria.Aplicacao.Interfaces;
+using Secretaria.DataTransfer;
 using Secretaria.DataTransfer.Request;
-using Secretaria.DataTransfer.Response;
 
 namespace Secretaria.Api.Controllers
 {
@@ -17,18 +17,21 @@ namespace Secretaria.Api.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<TurmaResponse>>> ObterTodos()
+        public async Task<ActionResult<PagedResponse<TurmaResponse>>> ObterTodos(
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageSize = 10)
         {
             try
             {
-                var turmas = await _turmaService.ObterTurmasAsync();
-                return Ok(turmas);
+                var turmasPaginadas = await _turmaService.ObterTurmasAsync(pageNumber, pageSize);
+                return Ok(turmasPaginadas);
             }
             catch (Exception ex)
             {
                 return StatusCode(500, $"Erro interno: {ex.Message}");
             }
         }
+
 
         [HttpPost]
         public async Task<ActionResult<TurmaResponse>> Criar([FromBody] CreateTurmaRequest turmaRequest)
@@ -49,8 +52,7 @@ namespace Secretaria.Api.Controllers
         {
             try
             {
-                var turmas = await _turmaService.ObterTurmasAsync(); // Não existe um método para obter por ID, então estou reutilizando o método para obter todos
-                var turma = turmas.FirstOrDefault(t => t.Id == id);
+                var turma = await _turmaService.ObterTurmaPorIdAsync(id);
 
                 if (turma == null)
                     return NotFound();
@@ -62,6 +64,7 @@ namespace Secretaria.Api.Controllers
                 return StatusCode(500, $"Erro interno: {ex.Message}");
             }
         }
+
 
         [HttpPut("{id}")]
         public async Task<ActionResult<TurmaResponse>> Atualizar(int id, [FromBody] UpdateTurmaRequest turmaRequest)

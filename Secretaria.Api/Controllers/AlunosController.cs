@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Secretaria.Aplicacao.Interfaces;
+using Secretaria.DataTransfer;
 using Secretaria.DataTransfer.Request;
 using Secretaria.DataTransfer.Response;
 
@@ -17,10 +18,10 @@ namespace Secretaria.Api.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<AlunoResponse>>> ObterTodos(int pageNumber = 1, int pageSize = 10)
+        public async Task<ActionResult<PagedResponse<AlunoResponse>>> ObterTodos(int pageNumber = 1, int pageSize = 10)
         {
-            var alunos = await _alunoService.ObterAlunosAsync(pageNumber, pageSize);
-            return Ok(alunos);
+            var alunosPaged = await _alunoService.ObterAlunosAsync(pageNumber, pageSize);
+            return Ok(alunosPaged);
         }
 
         [HttpPost]
@@ -43,10 +44,10 @@ namespace Secretaria.Api.Controllers
         }
 
         [HttpGet("buscar")]
-        public async Task<ActionResult<IEnumerable<AlunoResponse>>> BuscarPorNome(string nome)
+        public async Task<ActionResult<PagedResponse<AlunoResponse>>> BuscarPorNome(string nome, int pageNumber = 1, int pageSize = 10)
         {
-            var alunos = await _alunoService.ObterPorNomeAsync(nome);
-            return Ok(alunos);
+            var alunosPaged = await _alunoService.ObterPorNomeAsync(nome, pageNumber, pageSize);
+            return Ok(alunosPaged);
         }
 
         [HttpPut("{id}")]

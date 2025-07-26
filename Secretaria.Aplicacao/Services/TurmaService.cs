@@ -1,77 +1,124 @@
 ﻿using Secretaria.Aplicacao.Interfaces;
+using Secretaria.DataTransfer;
 using Secretaria.DataTransfer.Request;
 using Secretaria.Dominio.Interfaces;
 using Secretaria.Dominio.Models;
 
-namespace Secretaria.Aplicacao.Services
+public class TurmaService : ITurmaService
 {
-    public class TurmaService : ITurmaService
+    private readonly ITurmaRepository _turmaRepository;
+    private readonly IMatriculaRepository _matriculaRepository;
+
+    public TurmaService(ITurmaRepository turmaRepository, IMatriculaRepository matriculaRepository)
     {
-        private readonly ITurmaRepository _turmaRepository;
-        private readonly IMatriculaRepository _matriculaRepository;
+        _turmaRepository = turmaRepository;
+        _matriculaRepository = matriculaRepository;
+    }
 
-        public TurmaService(ITurmaRepository turmaRepository, IMatriculaRepository matriculaRepository)
-        {
-            _turmaRepository = turmaRepository;
-            _matriculaRepository = matriculaRepository;
-        }
+    public async Task<TurmaResponse> CriarTurmaAsync(CreateTurmaRequest turmaRequest)
+    {
+        var nome = turmaRequest.Nome?.Trim();
+        var descricao = turmaRequest.Descricao?.Trim();
 
-        public async Task<TurmaResponse> CriarTurmaAsync(CreateTurmaRequest turmaRequest)
+        ValidarNome(nome);
+        await ValidarNomeDuplicadoAsync(nome);
+
+        var turma = new Turma(nome, descricao);
+        turma = await _turmaRepository.AdicionarAsync(turma);
+
+        return MapearTurmaResponse(turma);
+    }
+
+    public async Task<TurmaResponse> AtualizarTurmaAsync(int id, UpdateTurmaRequest turmaRequest)
+    {
+        var turma = await _turmaRepository.ObterPorIdAsync(id);
+        if (turma == null)
+            throw new ArgumentException("Turma não encontrada");
+
+        var nome = turmaRequest.Nome?.Trim();
+        var descricao = turmaRequest.Descricao?.Trim();
+
+        ValidarNome(nome);
+        await ValidarNomeDuplicadoAsync(nome, id);
+
+        turma.Atualizar(nome, descricao);
+
+        var atualizado = await _turmaRepository.AtualizarAsync(turma);
+        if (!atualizado)
+            throw new ArgumentException("Erro ao atualizar turma");
+
+        return MapearTurmaResponse(turma);
+    }
+
+    public async Task<PagedResponse<TurmaResponse>> ObterTurmasAsync(int pageNumber = 1, int pageSize = 10)
+    {
+        var turmas = await _turmaRepository.ObterTodosAsync(pageNumber, pageSize);
+        var totalTurmas = await _turmaRepository.ContarTurmasAsync();
+
+        var turmaResponses = new List<TurmaResponse>();
+
+        foreach (var turma in turmas.OrderBy(t => t.Nome))
         {
-            var turma = new Turma(turmaRequest.Nome, turmaRequest.Descricao);
-            turma = await _turmaRepository.AdicionarAsync(turma);
-            return new TurmaResponse
+            var alunos = await _matriculaRepository.ObterAlunosPorTurmaAsync(turma.Id);
+            turmaResponses.Add(new TurmaResponse
             {
                 Id = turma.Id,
                 Nome = turma.Nome,
-                Descricao = turma.Descricao
-            };
+                Descricao = turma.Descricao,
+                NumeroAlunos = alunos.Count()
+            });
         }
 
-        public async Task<IEnumerable<TurmaResponse>> ObterTurmasAsync()
+        return new PagedResponse<TurmaResponse>
         {
-            var turmas = await _turmaRepository.ObterTodosAsync();
-            var turmaResponses = new List<TurmaResponse>();
+            Items = turmaResponses,
+            TotalCount = totalTurmas
+        };
+    }
 
-            foreach (var turma in turmas)
-            {
-                var alunos = await _matriculaRepository.ObterAlunosPorTurmaAsync(turma.Id);
-                int numeroAlunos = alunos.Count();
-                turmaResponses.Add(new TurmaResponse
-                {
-                    Id = turma.Id,
-                    Nome = turma.Nome,
-                    Descricao = turma.Descricao,
-                    NumeroAlunos = numeroAlunos
-                });
-            }
+    public async Task<TurmaResponse> ObterTurmaPorIdAsync(int id)
+    {
+        var turma = await _turmaRepository.ObterPorIdAsync(id);
+        if (turma == null)
+            return null;
 
-            return turmaResponses;
-        }
+        var alunos = await _matriculaRepository.ObterAlunosPorTurmaAsync(turma.Id);
 
-        public async Task<TurmaResponse> AtualizarTurmaAsync(int id, UpdateTurmaRequest turmaRequest)
+        return new TurmaResponse
         {
-            var turma = await _turmaRepository.ObterPorIdAsync(id);
-            if (turma == null)
-                throw new ArgumentException("Turma não encontrada");
+            Id = turma.Id,
+            Nome = turma.Nome,
+            Descricao = turma.Descricao,
+            NumeroAlunos = alunos.Count()
+        };
+    }
 
-            turma.Atualizar(turmaRequest.Nome, turmaRequest.Descricao);
+    public async Task<bool> RemoverTurmaAsync(int id)
+    {
+        return await _turmaRepository.RemoverAsync(id);
+    }
 
-            var atualizado = await _turmaRepository.AtualizarAsync(turma);
-            if (!atualizado)
-                throw new ArgumentException("Erro ao atualizar turma");
 
-            return new TurmaResponse
-            {
-                Id = turma.Id,
-                Nome = turma.Nome,
-                Descricao = turma.Descricao
-            };
-        }
+    private void ValidarNome(string nome)
+    {
+        if (string.IsNullOrWhiteSpace(nome) || nome.Length < 3)
+            throw new ArgumentException("O nome da turma deve ter no mínimo 3 caracteres.");
+    }
 
-        public async Task<bool> RemoverTurmaAsync(int id)
+    private async Task ValidarNomeDuplicadoAsync(string nome, int? idAtual = null)
+    {
+        var turmaExistente = await _turmaRepository.ObterPorNomeAsync(nome);
+        if (turmaExistente != null && turmaExistente.Id != idAtual)
+            throw new InvalidOperationException("Já existe uma turma com esse nome.");
+    }
+
+    private TurmaResponse MapearTurmaResponse(Turma turma)
+    {
+        return new TurmaResponse
         {
-            return await _turmaRepository.RemoverAsync(id);
-        }
+            Id = turma.Id,
+            Nome = turma.Nome,
+            Descricao = turma.Descricao
+        };
     }
 }

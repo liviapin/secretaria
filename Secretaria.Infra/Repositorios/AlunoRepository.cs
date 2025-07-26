@@ -35,12 +35,34 @@ namespace Secretaria.Infra.Repositories
                 .ToListAsync();
         }
 
+        public async Task<int> ContarAlunosAsync()
+        {
+            return await _context.Alunos.CountAsync();
+        }
+
+        public async Task<IEnumerable<Aluno>> ObterPorNomeAsync(string nome, int pageNumber, int pageSize)
+        {
+            return await _context.Alunos
+                .Where(a => a.Nome.Contains(nome))
+                .OrderBy(a => a.Nome)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+        }
+
         public async Task<IEnumerable<Aluno>> ObterPorNomeAsync(string nome)
         {
             return await _context.Alunos
                 .Where(a => a.Nome.Contains(nome))
                 .OrderBy(a => a.Nome)
                 .ToListAsync();
+        }
+
+        public async Task<int> ContarAlunosPorNomeAsync(string nome)
+        {
+            return await _context.Alunos
+                .Where(a => a.Nome.Contains(nome))
+                .CountAsync();
         }
 
         public async Task<bool> AtualizarAsync(Aluno aluno)

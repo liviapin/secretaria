@@ -1,8 +1,10 @@
-﻿namespace Secretaria.DataTransfer.Request
+﻿using System.ComponentModel.DataAnnotations;
+
+public class CreateTurmaRequest
 {
-    public class CreateTurmaRequest
-    {
-        public string Nome { get; set; }
-        public string Descricao { get; set; }
-    }
+    [Required(ErrorMessage = "Nome é obrigatório.")]
+    [MinLength(3, ErrorMessage = "O nome da turma deve ter no mínimo 3 caracteres.")]
+    public string Nome { get; set; }
+
+    public string Descricao { get; set; }
 }
