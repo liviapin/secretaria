@@ -5,9 +5,17 @@ services:
       - "1433:1433"
     environment:
       - ACCEPT_EULA=Y
-      - SA_PASSWORD=SuaSenhaSuperSegura123!
+      - MSSQL_SA_PASSWORD=SuaSenhaSuperSegura123!
     volumes:
       - sqlserver_data:/var/opt/mssql
     restart: always
+  api:
+    image: secretariaapi
+    build: .
+    ports: 
+      - "8080:8080"
+    environment: 
+      - ConnectionStrings__DefaultConnection=Server=sqlserver,1433;Database=SecretariaDB;User Id=sa;Password=SuaSenhaSuperSegura123!;Encrypt=False;
+
 volumes:
   sqlserver_data:

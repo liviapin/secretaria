@@ -16,6 +16,12 @@ public class AuthController : ControllerBase
     private readonly SignInManager<ApplicationUser> _signInManager;
     private readonly IConfiguration _configuration;
 
+    /// <summary>
+    /// Inicializa uma nova instância do controlador de autenticação.
+    /// </summary>
+    /// <param name="userManager">Gerenciador de usuários do Identity.</param>
+    /// <param name="signInManager">Gerenciador de login do Identity.</param>
+    /// <param name="configuration">Configuração da aplicação para acesso a settings.</param>
     public AuthController(UserManager<ApplicationUser> userManager,
                           SignInManager<ApplicationUser> signInManager,
                           IConfiguration configuration)
@@ -25,6 +31,11 @@ public class AuthController : ControllerBase
         _configuration = configuration;
     }
 
+    /// <summary>
+    /// Autentica o usuário e retorna um token JWT válido se as credenciais estiverem corretas.
+    /// </summary>
+    /// <param name="request">Dados de login contendo e-mail e senha.</param>
+    /// <returns>Token JWT para acesso autenticado.</returns>
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
@@ -38,8 +49,13 @@ public class AuthController : ControllerBase
         return Ok(new { token });
     }
 
+    /// <summary>
+    /// Registra um novo usuário com perfil de administrador.
+    /// </summary>
+    /// <param name="request">Dados do administrador a ser cadastrado.</param>
+    /// <returns>Mensagem de sucesso ou erros de validação.</returns>
     [HttpPost("cadastrar-admin")]
-    //[Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> RegistrarAdmin([FromBody] RegisterAdminRequest request)
     {
         var user = new ApplicationUser
@@ -57,6 +73,12 @@ public class AuthController : ControllerBase
         return Ok("Administrador cadastrado com sucesso.");
     }
 
+    /// <summary>
+    /// Gera um token JWT para o usuário autenticado contendo suas claims e roles.
+    /// </summary>
+    /// <param name="user">Usuário autenticado.</param>
+    /// <param name="roles">Lista de roles associadas ao usuário.</param>
+    /// <returns>Token JWT codificado.</returns>
     private string GerarJwtToken(ApplicationUser user, IList<string> roles)
     {
         var claims = new List<Claim>

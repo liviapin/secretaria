@@ -1,5 +1,8 @@
-﻿namespace Secretaria.Dominio.Models
+﻿using Microsoft.EntityFrameworkCore;
+
+namespace Secretaria.Dominio.Models
 {
+    [Index(nameof(Nome))]
     public class Turma
     {
         public int Id { get; private set; }

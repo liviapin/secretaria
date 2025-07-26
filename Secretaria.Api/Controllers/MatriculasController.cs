@@ -8,7 +8,7 @@ using Secretaria.DataTransfer.Response;
 namespace Secretaria.Api.Controllers
 {
     [ApiController]
-    //[Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin")]
     [Route("api/[controller]")]
     public class MatriculasController : ControllerBase
     {
@@ -19,6 +19,11 @@ namespace Secretaria.Api.Controllers
             _matriculaService = matriculaService;
         }
 
+        /// <summary>
+        /// Realiza a matrícula de um aluno em uma turma.
+        /// </summary>
+        /// <param name="matriculaRequest">Dados da matrícula.</param>
+        /// <returns>Detalhes da matrícula criada.</returns>
         [HttpPost]
         public async Task<ActionResult<MatriculaResponse>> Matricular([FromBody] MatriculaRequest matriculaRequest)
         {
@@ -33,6 +38,13 @@ namespace Secretaria.Api.Controllers
             }
         }
 
+        /// <summary>
+        /// Obtém a lista paginada de alunos matriculados em uma turma específica.
+        /// </summary>
+        /// <param name="turmaId">ID da turma.</param>
+        /// <param name="pageNumber">Número da página (padrão: 1).</param>
+        /// <param name="pageSize">Tamanho da página (padrão: 10).</param>
+        /// <returns>Lista paginada de alunos matriculados.</returns>
         [HttpGet("turma/{turmaId}")]
         public async Task<ActionResult<PagedResponse<AlunoResponse>>> ObterAlunosPorTurma(int turmaId, int pageNumber = 1, int pageSize = 10)
         {

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Secretaria.Infra.Context;
 
@@ -11,9 +12,11 @@ using Secretaria.Infra.Context;
 namespace Secretaria.Infra.Migrations
 {
     [DbContext(typeof(SecretariaDbContext))]
-    partial class SecretariaDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250726180020_IndiceNomeTurma")]
+    partial class IndiceNomeTurma
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

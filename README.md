@@ -1,7 +1,7 @@
 Iniciando a Aplicação
 
 Para subir todos os serviços necessários (API, banco de dados, etc.), utilize o Docker Compose com o seguinte comando:
-```bash
+```
 docker compose up
 ```
 Usuário Administrador Padrão
@@ -15,7 +15,7 @@ Email: admin@admin.com
 Senha: Senha@123
 
 Acesse o Swagger UI:
-http://localhost:{porta}/swagger
+http://localhost:8080/swagger
 
 Acesse a rota de login via POST:
 
